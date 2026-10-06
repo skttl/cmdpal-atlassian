@@ -1,0 +1,82 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: broker
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npm test
+  package:
+    needs: verify
+    runs-on: windows-2025
+    strategy:
+      matrix:
+        architecture: [x64, ARM64]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          global-json-file: global.json
+      - run: dotnet run --project tests/SearchChecks
+      - name: Build and sign release
+        shell: pwsh
+        env:
+          RELEASE_TAG: '${{ github.ref_name }}'
+          ARCHITECTURE: '${{ matrix.architecture }}'
+          SIGNING_PFX_BASE64: '${{ secrets.SIGNING_PFX_BASE64 }}'
+          SIGNING_PFX_PASSWORD: '${{ secrets.SIGNING_PFX_PASSWORD }}'
+          PACKAGE_PUBLISHER: '${{ vars.PACKAGE_PUBLISHER }}'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RELEASE_TAG -notmatch '^v(\d+\.\d+\.\d+)$') { throw 'Expected vMAJOR.MINOR.PATCH' }
+          $version = $Matches[1]
+          $manifest = [xml](Get-Content src/LinksForAtlassian/Package.appxmanifest)
+          if ($manifest.Package.Identity.Version -ne "$version.0") { throw 'Tag and package manifest disagree' }
+          if (!$env:SIGNING_PFX_BASE64 -or !$env:PACKAGE_PUBLISHER) { throw 'Configure signing credentials and publisher before releasing' }
+          $certPath = Join-Path $env:RUNNER_TEMP 'signing.pfx'
+          try {
+            [IO.File]::WriteAllBytes($certPath, [Convert]::FromBase64String($env:SIGNING_PFX_BASE64))
+            $password = ConvertTo-SecureString $env:SIGNING_PFX_PASSWORD -AsPlainText -Force
+            $certificate = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My -Password $password
+            ./scripts/build.ps1 -Architecture $env:ARCHITECTURE -Version "$version.0" -Publisher $env:PACKAGE_PUBLISHER -SigningCertificate $certificate.Thumbprint
+          } finally {
+            if (Test-Path -LiteralPath $certPath) { Remove-Item -LiteralPath $certPath -Force }
+            if ($certificate) { Remove-Item -LiteralPath $certificate.PSPath -Force }
+          }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: 'packages-${{ matrix.architecture }}'
+          path: artifacts/${{ matrix.architecture }}/
+          if-no-files-found: error
+  publish:
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download verified package artifacts
+        env:
+          GH_TOKEN: '${{ github.token }}'
+          GH_REPO: '${{ github.repository }}'
+          RUN_ID: '${{ github.run_id }}'
+        run: gh run download "$RUN_ID" --dir packages
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: '${{ github.token }}'
+          GH_REPO: '${{ github.repository }}'
+          RELEASE_TAG: '${{ github.ref_name }}'
+        run: |
+          find packages -name '*.msix' -not -path '*/Dependencies/*' -exec cp {} . \;
+          sha256sum ./*.msix > SHA256SUMS.txt
+          gh release create "$RELEASE_TAG" ./*.msix SHA256SUMS.txt --verify-tag --generate-notes

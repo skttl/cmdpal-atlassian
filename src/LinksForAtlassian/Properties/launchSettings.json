@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "LinksForAtlassian (Package)": {
+      "commandName": "MsixPackage",
+      "doNotLaunchApp": true
+    },
+    "LinksForAtlassian (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

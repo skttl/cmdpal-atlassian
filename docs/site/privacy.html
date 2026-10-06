@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Privacy — Links for Atlassian</title>
+<style>body{font:18px/1.6 system-ui,sans-serif;max-width:760px;margin:3rem auto;padding:0 1.5rem;color:#182b36;background:#f4f6f8}a{color:#075a9c}a:focus-visible{outline:3px solid #075a9c;outline-offset:4px}</style>
+<main><p><a href="index.html">Links for Atlassian</a></p><h1>Privacy and data handling</h1>
+<p>This is a development preview. The public login service's operator, contact details and final URLs must be documented before public hosting is offered.</p>
+<h2>Your device</h2><p>The extension stores settings and cached names, identifiers and links locally. Windows DPAPI protects access tokens and connection keys for your Windows user. Metadata caches are not encrypted.</p>
+<h2>Provider requests</h2><p>Repository/project queries are matched locally. Confluence title searches go directly to Atlassian. The extension requests no source code, issue bodies or page bodies.</p>
+<h2>Login service</h2><p>The OAuth broker handles codes and tokens. It stores encrypted refresh grants and hashed connection credentials. Login transactions expire after 10 minutes. Unused grants expire after 90 days. Search queries and repository/project metadata are not stored by the broker. Cloudflare uses client IPs for rate limiting. No application analytics are implemented.</p>
+<h2>Delete and revoke</h2><p>Disconnect removes this device's broker connection, local credentials and provider caches. Jira and Confluence share one connection; other devices remain connected. The shared grant is deleted when no connections remain. Revoke app access at Atlassian or Bitbucket to revoke the provider grant.</p>
+<p><a href="https://github.com/skttl/cmdpal-atlassian/blob/main/docs/privacy.md">Full implementation details</a></p></main></html>
