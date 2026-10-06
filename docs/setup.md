@@ -60,4 +60,6 @@ Providers are `atlassian` and `bitbucket`; products are `jira`, `confluence`, `b
 
 ## Required real-account checks
 
+Before testing against an organization's site, its site administrator must authorize the OAuth app. If the consent page says the site admin must authorize it, the user cannot complete consent until that approval is in place. The administrator can review the app in Atlassian Administration → Apps → the selected site → Connected apps. See [Atlassian's instructions](https://support.atlassian.com/atlassian-cloud/kb/your-site-admin-must-authorize-this-app-error-in-atlassian-cloud-apps/). Enable app sharing before testing with accounts other than the app owner.
+
 Verify Bitbucket login/workspace discovery, Jira project/board discovery, and Confluence space/page search with the registered apps. Verify granting Confluence access after Jira and renewing either connection. Check cancellation, denied consent, restart, disconnect, offline cache and rate limiting. These checks cannot be substituted with a successful build or mocked token exchange.

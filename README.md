@@ -49,6 +49,7 @@ Jira and Confluence use the same Atlassian OAuth app/account grant. Their select
 
 ## Troubleshooting
 
+- **Site admin must authorize this app:** ask your organization's site administrator to approve Links for Atlassian for the selected site. A normal user cannot approve the app on behalf of the site. See [Atlassian's admin instructions](https://support.atlassian.com/atlassian-cloud/kb/your-site-admin-must-authorize-this-app-error-in-atlassian-cloud-apps/).
 - **No workspace/site:** reconnect to grant access, then choose the target again.
 - **Expired authorization:** use Reconnect / grant access.
 - **Offline or throttled:** existing cached metadata remains visible. Use Refresh now after the displayed retry time.
