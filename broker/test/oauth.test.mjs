@@ -28,6 +28,11 @@ test('unknown provider is rejected', async () => {
   const broker = new Connections({ storage: new Storage() }, env);
   assert.equal((await broker.fetch(post('/v1/login', { provider: 'unknown' }))).status, 400);
 });
+
+test('unconfigured provider cannot start a login', async () => {
+  const broker = new Connections({ storage: new Storage() }, { ...env, ATLASSIAN_CLIENT_SECRET: '' });
+  assert.equal((await broker.fetch(post('/v1/login', { provider: 'atlassian' }))).status, 503);
+});
 test('wrong state and wrong poll key cannot retrieve a login', async () => {
   const broker = new Connections({ storage: new Storage() }, env);
   const value = await start(broker);

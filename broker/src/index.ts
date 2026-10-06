@@ -96,6 +96,7 @@ export class Connections {
     if (url.pathname === '/v1/login') {
       if (!provider(body.provider)) return json({ error: 'Unknown provider' }, 400);
       const p = body.provider;
+      if (!this.env.ENCRYPTION_KEY || !(p === 'atlassian' ? this.env.ATLASSIAN_CLIENT_ID && this.env.ATLASSIAN_CLIENT_SECRET : this.env.BITBUCKET_CLIENT_ID && this.env.BITBUCKET_CLIENT_SECRET)) return json({ error: 'Provider login is not configured yet' }, 503);
       if (body.product !== undefined && !['jira', 'confluence', 'bitbucket'].includes(String(body.product))) return json({ error: 'Unknown product' }, 400);
       let requestedScopes = p === 'atlassian' ? 'offline_access read:me ' + (body.product === 'jira' ? jiraScopes : body.product === 'confluence' ? confluenceScopes : jiraScopes + ' ' + confluenceScopes) : '';
       // An unlinked device cannot identify the account before consent. Request both supported products so consent cannot narrow another device's grant.
